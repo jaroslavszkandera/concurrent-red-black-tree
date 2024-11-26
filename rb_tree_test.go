@@ -7,7 +7,8 @@ import (
 )
 
 func BenchmarkRedBlackTree_Insert(b *testing.B) {
-	for n := 0; n < b.N; n++ {
+	// for n := 0; n < b.N; n++ {
+	for n := 0; n < 1000; n++ {
 		elems := generateRandomNumbers(n)
 		rbt := NewRedBlackTree()
 		for _, elem := range elems {

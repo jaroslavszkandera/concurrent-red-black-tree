@@ -12,6 +12,9 @@ import (
 //    (leaves) has the same number of black nodes.
 // 5. All leaves (nil nodes) are black.
 
+const colorRed = "\033[0;31m"
+const colorNone = "\033[0m"
+
 type Color bool
 
 const (
@@ -39,6 +42,7 @@ func NewRedBlackTree() *RBTree {
 
 // TODO: func (rbt *RBTree) Delete(data int) bool   { return false }
 func (rbt *RBTree) LeftRotate(n *Node) {
+	fmt.Printf("LeftRotate %d\n", n.data)
 	y := n.right
 	n.right = y.left
 
@@ -56,7 +60,9 @@ func (rbt *RBTree) LeftRotate(n *Node) {
 	y.left = n
 	n.parent = y
 }
+
 func (rbt *RBTree) RightRotate(n *Node) {
+	fmt.Printf("RightRotate %d\n", n.data)
 	y := n.left
 	n.left = y.right
 
@@ -74,21 +80,20 @@ func (rbt *RBTree) RightRotate(n *Node) {
 	y.right = n
 	n.parent = y
 }
+
 func (rbt *RBTree) FixInsert(n *Node) {
+	fmt.Printf("Fixing insertion of %d\n", n.data)
 	for n != rbt.root && n.parent.color == Red {
 		parent := n.parent
 		grandparent := parent.parent
-
-		// if parent == nil || grandparent == nil {
-		// 	fmt.Println("ultra giga hughmongous cringe")
-		// 	break
-		// }
+		fmt.Printf("parent %v, grandparent %v\n", parent, grandparent)
 
 		if parent == grandparent.left {
+			fmt.Printf("uncle (grandparent.right) %v\n", grandparent.right)
 			uncle := grandparent.right
 			// Case 1 (Uncle is red): Recolor parent and uncle to black,
 			//   grandparent to red
-			if uncle.color == Red {
+			if uncle != nil && uncle.color == Red {
 				parent.color = Black
 				uncle.color = Black
 				grandparent.color = Red
@@ -107,10 +112,11 @@ func (rbt *RBTree) FixInsert(n *Node) {
 				rbt.RightRotate(grandparent)
 			}
 		} else {
+			fmt.Printf("uncle (grandparent.left) %v\n", grandparent.left)
 			uncle := grandparent.left
 			// Case 1 (Uncle is red): Recolor parent and uncle to black,
 			//   grandparent to red
-			if uncle.color == Red {
+			if uncle != nil && uncle.color == Red {
 				parent.color = Black
 				uncle.color = Black
 				grandparent.color = Red
@@ -131,10 +137,7 @@ func (rbt *RBTree) FixInsert(n *Node) {
 }
 
 func (rbt *RBTree) Insert(data int) bool {
-	if rbt.root == nil {
-		rbt.root = &Node{data: data, color: Black}
-		return true
-	}
+	fmt.Printf("Inserting %d\n", data)
 	new_node := NewNode(data)
 	var parent *Node
 	current := rbt.root
@@ -152,10 +155,25 @@ func (rbt *RBTree) Insert(data int) bool {
 		}
 	}
 	new_node.parent = parent
-	if parent.data < new_node.data {
-		parent.right = new_node
-	} else {
+	if parent == nil {
+		rbt.root = new_node
+		new_node.color = Black
+		return true
+	} else if new_node.data < parent.data {
 		parent.left = new_node
+	} else {
+		parent.right = new_node
+	}
+
+	if new_node.parent == nil {
+		fmt.Printf("new_node.parent == nil, root data %d\n", new_node.data)
+		new_node.color = Black
+		return true
+	}
+
+	if new_node.parent.parent == nil {
+		fmt.Printf("new_node.parent.parent == nil, data: %d\n", new_node.data)
+		return true
 	}
 
 	rbt.FixInsert(new_node)
@@ -165,7 +183,11 @@ func (rbt *RBTree) Insert(data int) bool {
 // TODO: func (rbt *RBTree) Search(data int) bool {}
 func Preorder(n *Node) {
 	if n != nil {
-		fmt.Print(n.data, " ")
+		if n.color {
+			fmt.Printf("%s%d%s ", colorRed, n.data, colorNone)
+		} else {
+			fmt.Printf("%d ", n.data)
+		}
 		Preorder(n.left)
 		Preorder(n.right)
 	}
@@ -173,29 +195,51 @@ func Preorder(n *Node) {
 func Postorder(n *Node) {
 	if n != nil {
 		Preorder(n.left)
-		fmt.Print(n.data, " ")
+		if n.color {
+			fmt.Printf("%s%d%s ", colorRed, n.data, colorNone)
+		} else {
+			fmt.Printf("%d ", n.data)
+		}
 		Preorder(n.right)
 	}
 }
 
-func Inorder(n *Node) {
+func inorderPrint(n *Node) {
 	if n != nil {
 		Preorder(n.left)
 		Preorder(n.right)
-		fmt.Print(n.data, " ")
+		if n.color {
+			fmt.Printf("%s%d%s ", colorRed, n.data, colorNone)
+		} else {
+			fmt.Printf("%d ", n.data)
+		}
 	}
+}
+
+func Inorder(n *Node) {
+	fmt.Print("Inorder: ")
+	inorderPrint(n)
+	fmt.Println()
 }
 
 func main() {
 	rbt := NewRedBlackTree()
 	rbt.Insert(10)
+	Inorder(rbt.root)
 	rbt.Insert(11)
+	Inorder(rbt.root)
 	rbt.Insert(9)
+	Inorder(rbt.root)
 	rbt.Insert(9)
+	Inorder(rbt.root)
 	rbt.Insert(15)
+	Inorder(rbt.root)
 	rbt.Insert(35)
+	Inorder(rbt.root)
 	rbt.Insert(25)
+	Inorder(rbt.root)
 	rbt.Insert(20)
+	Inorder(rbt.root)
 	rbt.Insert(1)
 	Inorder(rbt.root)
 	fmt.Println("hello")
