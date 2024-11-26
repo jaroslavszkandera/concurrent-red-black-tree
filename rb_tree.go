@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 )
 
 // Properties of red-black tree:
@@ -222,25 +223,64 @@ func Inorder(n *Node) {
 	fmt.Println()
 }
 
+func columnCount(h int) int {
+	if h == 1 {
+		return 1
+	}
+	return columnCount(h-1) + columnCount(h-1) + 1
+}
+
+func GetTreeHeight(root *Node) int {
+	if root == nil {
+		return 0
+	}
+	return max(GetTreeHeight(root.left), GetTreeHeight(root.right)) + 1
+}
+
+func populateTree(M [][]*Node, root *Node, col, row, h int) {
+	if root == nil {
+		return
+	}
+	M[row][col] = root
+	populateTree(M, root.left, col-int(math.Pow(2, float64(h-2))), row+1, h-1)
+	populateTree(M, root.right, col+int(math.Pow(2, float64(h-2))), row+1, h-1)
+}
+
+func (tree *RBTree) TreePrinter() {
+	height := GetTreeHeight(tree.root)
+	columns := columnCount(height)
+
+	matrix := make([][]*Node, height)
+	for i := range matrix {
+		matrix[i] = make([]*Node, columns)
+	}
+
+	populateTree(matrix, tree.root, columns/2, 0, height)
+
+	for i := 0; i < height; i++ {
+		for j := 0; j < columns; j++ {
+			if matrix[i][j] == nil {
+				fmt.Print("  ")
+			} else {
+				node := matrix[i][j]
+				if node.color == Red {
+					fmt.Printf("%s%2d%s ", colorRed, node.data, colorNone)
+				} else {
+					fmt.Printf("%2d ", node.data)
+				}
+			}
+		}
+		fmt.Println()
+	}
+}
+
 func main() {
 	rbt := NewRedBlackTree()
-	rbt.Insert(10)
-	Inorder(rbt.root)
-	rbt.Insert(11)
-	Inorder(rbt.root)
-	rbt.Insert(9)
-	Inorder(rbt.root)
-	rbt.Insert(9)
-	Inorder(rbt.root)
-	rbt.Insert(15)
-	Inorder(rbt.root)
-	rbt.Insert(35)
-	Inorder(rbt.root)
-	rbt.Insert(25)
-	Inorder(rbt.root)
-	rbt.Insert(20)
-	Inorder(rbt.root)
-	rbt.Insert(1)
-	Inorder(rbt.root)
-	fmt.Println("hello")
+	vals := []int{10, 11, 9, 9, 15, 35, 25, 20, 1, 12,
+		17, 13, 15, 114, 23, 75, 64, 32, 74, 99, 43}
+	for _, val := range vals {
+		rbt.Insert(val)
+	}
+	fmt.Println(GetTreeHeight(rbt.root))
+	rbt.TreePrinter()
 }
