@@ -181,7 +181,20 @@ func (rbt *RBTree) Insert(data int) bool {
 	return true
 }
 
-// TODO: func (rbt *RBTree) Search(data int) bool {}
+func (rbt *RBTree) Search(data int) *Node {
+	curr := rbt.root
+	for curr != nil {
+		if data < curr.data {
+			curr = curr.left
+		} else if data > curr.data {
+			curr = curr.right
+		} else {
+			return curr
+		}
+	}
+	return nil
+}
+
 func Preorder(n *Node) {
 	if n != nil {
 		if n.color {
@@ -283,4 +296,5 @@ func main() {
 	}
 	fmt.Println(GetTreeHeight(rbt.root))
 	rbt.TreePrinter()
+	fmt.Println(rbt.Search(64))
 }
