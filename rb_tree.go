@@ -29,6 +29,7 @@ type Node struct {
 	left, right, parent *Node
 }
 
+// TODO(JS): sentinel Node
 type RBTree struct {
 	root *Node
 }
@@ -41,47 +42,200 @@ func NewRedBlackTree() *RBTree {
 	return &RBTree{root: nil}
 }
 
-// TODO: func (rbt *RBTree) Delete(data int) bool   { return false }
-func (rbt *RBTree) LeftRotate(n *Node) {
-	fmt.Printf("LeftRotate %d\n", n.data)
-	y := n.right
-	n.right = y.left
-
-	if y.left != nil {
-		y.left.parent = n
+func (rbt *RBTree) minimum(n *Node) *Node {
+	curr := n
+	for curr.left != nil {
+		curr = curr.left
 	}
-	y.parent = n.parent
+	return curr
+}
+
+func getSibling(n *Node) *Node {
 	if n.parent == nil {
-		rbt.root = y
+		return nil
+	}
+	if n == n.parent.left {
+		return n.parent.right
+	}
+	return n.parent.left
+}
+
+func (rbt *RBTree) successor(n *Node) *Node {
+	if n == nil {
+		return nil
+	}
+	if n.right != nil {
+		return rbt.minimum(n.right)
+	}
+	m := n.parent
+	for m != nil && n == m.right {
+		m = n
+		m = m.parent
+	}
+	return m
+}
+
+func (rbt *RBTree) Delete(data int) bool {
+	fmt.Printf("Deleting %d\n", data)
+	if rbt.root == nil {
+		return false
+	}
+	nodeToDel := rbt.Search(data)
+	if nodeToDel == nil {
+		return false // not found
+	}
+	fmt.Println("Found nodeToDel", nodeToDel)
+
+	var child *Node
+	var replacement *Node
+	if nodeToDel.left == nil || nodeToDel.right == nil {
+		// has at most one child
+		replacement = nodeToDel
+	} else {
+		// successor
+		replacement = rbt.successor(nodeToDel)
+	}
+
+	if replacement.left != nil {
+		child = replacement.left
+	} else {
+		child = replacement.right
+	}
+
+	fmt.Printf("child %v replacement %v\n", child, replacement)
+	if child != nil {
+		child.parent = replacement.parent
+	}
+
+	// Update parent to point to the child
+	if replacement.parent == nil {
+		rbt.root = child
+	} else if replacement == replacement.parent.left {
+		replacement.parent.left = child
+	} else {
+		replacement.parent.right = child
+	}
+
+	if replacement != nodeToDel {
+		nodeToDel.data = replacement.data
+	}
+	// this is not alright, we need the sentinel
+	if replacement.color == Black && child != nil {
+		rbt.fixDelete(child)
+	}
+
+	return true
+}
+
+func (rbt *RBTree) fixDelete(n *Node) {
+	fmt.Println("fixDelete", n)
+	for n != rbt.root && (n == nil || n.color == Black) {
+		if n == n.parent.left {
+			sibling := n.parent.right
+			if sibling.color == Red {
+				sibling.color = Black
+				n.parent.color = Red
+				rbt.leftRotate(n.parent)
+				sibling = n.parent.right
+			}
+			if (sibling.left == nil || sibling.left.color == Black) &&
+				(sibling.right == nil || sibling.right.color == Black) {
+				sibling.color = Red
+				n = n.parent
+			} else {
+				if sibling.right == nil || sibling.right.color == Black {
+					if sibling.left != nil {
+						sibling.left.color = Black
+					}
+					sibling.color = Red
+					rbt.rightRotate(sibling)
+					sibling = n.parent.right
+				}
+				sibling.color = n.parent.color
+				n.parent.color = Black
+				if sibling.right != nil {
+					sibling.right.color = Black
+				}
+				rbt.leftRotate(n.parent)
+				n = rbt.root
+			}
+		} else { // Node is a right child
+			sibling := n.parent.left
+			if sibling.color == Red {
+				sibling.color = Black
+				n.parent.color = Red
+				rbt.rightRotate(n.parent)
+				sibling = n.parent.left
+			}
+			if (sibling.left == nil || sibling.left.color == Black) &&
+				(sibling.right == nil || sibling.right.color == Black) {
+				sibling.color = Red
+				n = n.parent
+			} else {
+				if sibling.left == nil || sibling.left.color == Black {
+					if sibling.right != nil {
+						sibling.right.color = Black
+					}
+					sibling.color = Red
+					rbt.leftRotate(sibling)
+					sibling = n.parent.left
+				}
+				sibling.color = n.parent.color
+				n.parent.color = Black
+				if sibling.left != nil {
+					sibling.left.color = Black
+				}
+				rbt.rightRotate(n.parent)
+				n = rbt.root
+			}
+		}
+	}
+	if n != nil {
+		n.color = Black
+	}
+}
+
+func (rbt *RBTree) leftRotate(n *Node) {
+	fmt.Printf("leftRotate %d\n", n.data)
+	newParent := n.right
+	n.right = newParent.left
+
+	if newParent.left != nil {
+		newParent.left.parent = n
+	}
+	newParent.parent = n.parent
+	if n.parent == nil {
+		rbt.root = newParent
 	} else if n == n.parent.left {
-		n.parent.left = y
+		n.parent.left = newParent
 	} else {
-		n.parent.right = y
+		n.parent.right = newParent
 	}
-	y.left = n
-	n.parent = y
+	newParent.left = n
+	n.parent = newParent
 }
 
-func (rbt *RBTree) RightRotate(n *Node) {
-	fmt.Printf("RightRotate %d\n", n.data)
-	y := n.left
-	n.left = y.right
+func (rbt *RBTree) rightRotate(n *Node) {
+	fmt.Printf("rightRotate %d\n", n.data)
+	newParent := n.left
+	n.left = newParent.right
 
-	if y.right != nil {
-		y.right.parent = n
+	if newParent.right != nil {
+		newParent.right.parent = n
 	}
-	y.parent = n.parent
+	newParent.parent = n.parent
 	if n.parent == nil {
-		rbt.root = y
+		rbt.root = newParent
 	} else if n == n.parent.right {
-		n.parent.right = y
+		n.parent.right = newParent
 	} else {
-		n.parent.left = y
+		n.parent.left = newParent
 	}
-	y.right = n
-	n.parent = y
+	newParent.right = n
+	n.parent = newParent
 }
 
+// Fix red-red situation
 func (rbt *RBTree) FixInsert(n *Node) {
 	fmt.Printf("Fixing insertion of %d\n", n.data)
 	for n != rbt.root && n.parent.color == Red {
@@ -104,13 +258,13 @@ func (rbt *RBTree) FixInsert(n *Node) {
 				//   Perform a left rotation on parent
 				if n == parent.right {
 					n = parent
-					rbt.LeftRotate(n)
+					rbt.leftRotate(n)
 				}
 				// Case 2.2 (Uncle is black and n is the left child):
 				//   Recolor parent and grandparent, right rotate on grandparent
 				parent.color = Black
 				grandparent.color = Red
-				rbt.RightRotate(grandparent)
+				rbt.rightRotate(grandparent)
 			}
 		} else {
 			fmt.Printf("uncle (grandparent.left) %v\n", grandparent.left)
@@ -126,11 +280,11 @@ func (rbt *RBTree) FixInsert(n *Node) {
 				// Case 2 (Uncle is black):
 				if n == parent.left {
 					n = parent
-					rbt.RightRotate(n)
+					rbt.rightRotate(n)
 				}
 				parent.color = Black
 				grandparent.color = Red
-				rbt.LeftRotate(grandparent)
+				rbt.leftRotate(grandparent)
 			}
 		}
 	}
@@ -259,8 +413,12 @@ func populateTree(M [][]*Node, root *Node, col, row, h int) {
 	populateTree(M, root.right, col+int(math.Pow(2, float64(h-2))), row+1, h-1)
 }
 
-func (tree *RBTree) TreePrinter() {
-	height := GetTreeHeight(tree.root)
+func (rbt *RBTree) TreePrinter() {
+	if rbt.root == nil {
+		fmt.Println("<nil>")
+		return
+	}
+	height := GetTreeHeight(rbt.root)
 	columns := columnCount(height)
 
 	matrix := make([][]*Node, height)
@@ -268,7 +426,7 @@ func (tree *RBTree) TreePrinter() {
 		matrix[i] = make([]*Node, columns)
 	}
 
-	populateTree(matrix, tree.root, columns/2, 0, height)
+	populateTree(matrix, rbt.root, columns/2, 0, height)
 
 	for i := 0; i < height; i++ {
 		for j := 0; j < columns; j++ {
@@ -289,12 +447,28 @@ func (tree *RBTree) TreePrinter() {
 
 func main() {
 	rbt := NewRedBlackTree()
-	vals := []int{10, 11, 9, 9, 15, 35, 25, 20, 1, 12,
+	vals1 := []int{10, 11, 9, 9, 15, 35, 25, 20, 1, 12,
 		17, 13, 15, 114, 23, 75, 64, 32, 74, 99, 43}
-	for _, val := range vals {
+	vals2 := []int{42, 65, 74, 90, 64, 85, 92, 48}
+	for _, val := range vals1 {
 		rbt.Insert(val)
 	}
 	fmt.Println(GetTreeHeight(rbt.root))
 	rbt.TreePrinter()
 	fmt.Println(rbt.Search(64))
+	rbt.Delete(15)
+	rbt.TreePrinter()
+	rbt.Delete(99)
+	rbt.TreePrinter()
+	rbt.Delete(35)
+	rbt.TreePrinter()
+	fmt.Printf("root %v root.left %v root.right %v", rbt.root.data, rbt.root.left.data, rbt.root.right.data)
+	for i, val1 := range vals1 {
+		rbt.TreePrinter()
+		rbt.Delete(val1)
+		if i < len(vals2) {
+			rbt.Insert(vals2[i])
+		}
+	}
+	rbt.TreePrinter()
 }
