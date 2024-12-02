@@ -19,8 +19,8 @@ const colorNone = "\033[0m"
 type Color bool
 
 const (
-	Red   Color = true
-	Black       = false
+	RED   Color = true
+	BLACK       = false
 )
 
 type Node struct {
@@ -35,7 +35,7 @@ type RBTree struct {
 }
 
 func NewNode(data int) *Node {
-	return &Node{data: data, color: Red, left: nil, right: nil, parent: nil}
+	return &Node{data: data, color: RED}
 }
 
 func NewRedBlackTree() *RBTree {
@@ -120,7 +120,7 @@ func (rbt *RBTree) Delete(data int) bool {
 		nodeToDel.data = replacement.data
 	}
 	// this is not alright, we need the sentinel
-	if replacement.color == Black && child != nil {
+	if replacement.color == BLACK && child != nil {
 		rbt.fixDelete(child)
 	}
 
@@ -129,61 +129,61 @@ func (rbt *RBTree) Delete(data int) bool {
 
 func (rbt *RBTree) fixDelete(n *Node) {
 	fmt.Println("fixDelete", n)
-	for n != rbt.root && (n == nil || n.color == Black) {
+	for n != rbt.root && (n == nil || n.color == BLACK) {
 		if n == n.parent.left {
 			sibling := n.parent.right
-			if sibling.color == Red {
-				sibling.color = Black
-				n.parent.color = Red
+			if sibling.color == RED {
+				sibling.color = BLACK
+				n.parent.color = RED
 				rbt.leftRotate(n.parent)
 				sibling = n.parent.right
 			}
-			if (sibling.left == nil || sibling.left.color == Black) &&
-				(sibling.right == nil || sibling.right.color == Black) {
-				sibling.color = Red
+			if (sibling.left == nil || sibling.left.color == BLACK) &&
+				(sibling.right == nil || sibling.right.color == BLACK) {
+				sibling.color = RED
 				n = n.parent
 			} else {
-				if sibling.right == nil || sibling.right.color == Black {
+				if sibling.right == nil || sibling.right.color == BLACK {
 					if sibling.left != nil {
-						sibling.left.color = Black
+						sibling.left.color = BLACK
 					}
-					sibling.color = Red
+					sibling.color = RED
 					rbt.rightRotate(sibling)
 					sibling = n.parent.right
 				}
 				sibling.color = n.parent.color
-				n.parent.color = Black
+				n.parent.color = BLACK
 				if sibling.right != nil {
-					sibling.right.color = Black
+					sibling.right.color = BLACK
 				}
 				rbt.leftRotate(n.parent)
 				n = rbt.root
 			}
 		} else { // Node is a right child
 			sibling := n.parent.left
-			if sibling.color == Red {
-				sibling.color = Black
-				n.parent.color = Red
+			if sibling.color == RED {
+				sibling.color = BLACK
+				n.parent.color = RED
 				rbt.rightRotate(n.parent)
 				sibling = n.parent.left
 			}
-			if (sibling.left == nil || sibling.left.color == Black) &&
-				(sibling.right == nil || sibling.right.color == Black) {
-				sibling.color = Red
+			if (sibling.left == nil || sibling.left.color == BLACK) &&
+				(sibling.right == nil || sibling.right.color == BLACK) {
+				sibling.color = RED
 				n = n.parent
 			} else {
-				if sibling.left == nil || sibling.left.color == Black {
+				if sibling.left == nil || sibling.left.color == BLACK {
 					if sibling.right != nil {
-						sibling.right.color = Black
+						sibling.right.color = BLACK
 					}
-					sibling.color = Red
+					sibling.color = RED
 					rbt.leftRotate(sibling)
 					sibling = n.parent.left
 				}
 				sibling.color = n.parent.color
-				n.parent.color = Black
+				n.parent.color = BLACK
 				if sibling.left != nil {
-					sibling.left.color = Black
+					sibling.left.color = BLACK
 				}
 				rbt.rightRotate(n.parent)
 				n = rbt.root
@@ -191,7 +191,7 @@ func (rbt *RBTree) fixDelete(n *Node) {
 		}
 	}
 	if n != nil {
-		n.color = Black
+		n.color = BLACK
 	}
 }
 
@@ -238,7 +238,7 @@ func (rbt *RBTree) rightRotate(n *Node) {
 // Fix red-red situation
 func (rbt *RBTree) FixInsert(n *Node) {
 	fmt.Printf("Fixing insertion of %d\n", n.data)
-	for n != rbt.root && n.parent.color == Red {
+	for n != rbt.root && n.parent.color == RED {
 		parent := n.parent
 		grandparent := parent.parent
 		fmt.Printf("parent %v, grandparent %v\n", parent, grandparent)
@@ -248,10 +248,10 @@ func (rbt *RBTree) FixInsert(n *Node) {
 			uncle := grandparent.right
 			// Case 1 (Uncle is red): Recolor parent and uncle to black,
 			//   grandparent to red
-			if uncle != nil && uncle.color == Red {
-				parent.color = Black
-				uncle.color = Black
-				grandparent.color = Red
+			if uncle != nil && uncle.color == RED {
+				parent.color = BLACK
+				uncle.color = BLACK
+				grandparent.color = RED
 				n = grandparent
 			} else {
 				// Case 2.1 (Uncle is black and n is the right child):
@@ -262,8 +262,8 @@ func (rbt *RBTree) FixInsert(n *Node) {
 				}
 				// Case 2.2 (Uncle is black and n is the left child):
 				//   Recolor parent and grandparent, right rotate on grandparent
-				parent.color = Black
-				grandparent.color = Red
+				parent.color = BLACK
+				grandparent.color = RED
 				rbt.rightRotate(grandparent)
 			}
 		} else {
@@ -271,10 +271,10 @@ func (rbt *RBTree) FixInsert(n *Node) {
 			uncle := grandparent.left
 			// Case 1 (Uncle is red): Recolor parent and uncle to black,
 			//   grandparent to red
-			if uncle != nil && uncle.color == Red {
-				parent.color = Black
-				uncle.color = Black
-				grandparent.color = Red
+			if uncle != nil && uncle.color == RED {
+				parent.color = BLACK
+				uncle.color = BLACK
+				grandparent.color = RED
 				n = grandparent
 			} else {
 				// Case 2 (Uncle is black):
@@ -282,13 +282,13 @@ func (rbt *RBTree) FixInsert(n *Node) {
 					n = parent
 					rbt.rightRotate(n)
 				}
-				parent.color = Black
-				grandparent.color = Red
+				parent.color = BLACK
+				grandparent.color = RED
 				rbt.leftRotate(grandparent)
 			}
 		}
 	}
-	rbt.root.color = Black
+	rbt.root.color = BLACK
 }
 
 func (rbt *RBTree) Insert(data int) bool {
@@ -312,7 +312,7 @@ func (rbt *RBTree) Insert(data int) bool {
 	new_node.parent = parent
 	if parent == nil {
 		rbt.root = new_node
-		new_node.color = Black
+		new_node.color = BLACK
 		return true
 	} else if new_node.data < parent.data {
 		parent.left = new_node
@@ -322,7 +322,7 @@ func (rbt *RBTree) Insert(data int) bool {
 
 	if new_node.parent == nil {
 		fmt.Printf("new_node.parent == nil, root data %d\n", new_node.data)
-		new_node.color = Black
+		new_node.color = BLACK
 		return true
 	}
 
@@ -434,7 +434,7 @@ func (rbt *RBTree) TreePrinter() {
 				fmt.Print("  ")
 			} else {
 				node := matrix[i][j]
-				if node.color == Red {
+				if node.color == RED {
 					fmt.Printf("%s%2d%s ", colorRed, node.data, colorNone)
 				} else {
 					fmt.Printf("%2d ", node.data)
